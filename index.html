@@ -34,6 +34,41 @@
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .lang-switch {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .lang-switch button {
+    padding: 4px 10px;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 4px;
+    background: transparent;
+    color: rgba(255,255,255,0.75);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: "Segoe UI", Arial, sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .lang-switch button:hover {
+    color: #fff;
+    border-color: rgba(255,255,255,0.6);
+  }
+
+  .lang-switch button.active {
+    background: #fff;
+    color: #1a3a5c;
+    border-color: #fff;
   }
 
   .form-area {
@@ -211,74 +246,80 @@
 <body>
 
 <div class="card">
-  <div class="header">MIDA &nbsp;•&nbsp; Elektroninio parašo kūrimas</div>
+  <div class="header">
+    <span data-i18n="header">MIDA &nbsp;•&nbsp; Elektroninio parašo kūrimas</span>
+    <div class="lang-switch">
+      <button type="button" id="langLt" onclick="setLang('lt')">LT</button>
+      <button type="button" id="langEn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
 
   <!-- Formos ekranas -->
   <div class="form-area" id="formArea">
     <div class="row">
-      <label>Vardas</label>
+      <label data-i18n="firstName">Vardas</label>
       <input type="text" id="vardas" autocomplete="given-name" />
     </div>
     <div class="row">
-      <label>Pavardė</label>
+      <label data-i18n="lastName">Pavardė</label>
       <input type="text" id="pavarde" autocomplete="family-name" />
     </div>
     <div class="row">
-      <label>Pareigos</label>
+      <label data-i18n="jobTitle">Pareigos</label>
       <input type="text" id="pareigos" />
     </div>
     <div class="row">
-      <label>Telefonas</label>
+      <label data-i18n="phone">Telefonas</label>
       <input type="text" id="telefonas" value="+370 " />
     </div>
     <div class="row">
-      <label>El. paštas</label>
+      <label data-i18n="email">El. paštas</label>
       <input type="text" id="elpastas" autocomplete="email" />
     </div>
 
     <div class="btn-row">
-      <button id="btnOK" onclick="kurti()">✓ &nbsp;Sukurti parašą</button>
+      <button id="btnOK" onclick="kurti()" data-i18n="createBtn">✓ &nbsp;Sukurti parašą</button>
     </div>
-    <div class="note">Parašas bus sugeneruotas ir nukopijuotas į iškarpinę</div>
+    <div class="note" data-i18n="formNote">Parašas bus sugeneruotas ir nukopijuotas į iškarpinę</div>
   </div>
 
   <!-- Instrukcijų ekranas -->
   <div class="instr-area" id="instrArea">
-    <div class="success-bar">✓ &nbsp;Parašas sėkmingai sukurtas ir nukopijuotas į iškarpinę!</div>
+    <div class="success-bar" data-i18n="successBar">✓ &nbsp;Parašas sėkmingai sukurtas ir nukopijuotas į iškarpinę!</div>
 
     <!-- Parašo peržiūra -->
     <div class="preview-wrap">
-      <div class="preview-label">PARAŠO PERŽIŪRA</div>
+      <div class="preview-label" data-i18n="previewLabel">PARAŠO PERŽIŪRA</div>
       <div class="preview-body" id="previewBody"></div>
     </div>
 
-    <button style="display:block;margin:0 auto 20px;padding:8px 28px;background:#1a6fa0;color:white;border:none;border-radius:4px;font-size:12px;font-weight:700;font-family:'Segoe UI',Arial,sans-serif;cursor:pointer;" onclick="kopijuoti()">📋 &nbsp;Kopijuoti parašą dar kartą</button>
-    <div id="clipMsg">✓ Parašas nukopijuotas į iškarpinę!</div>
+    <button id="copyAgainBtn" style="display:block;margin:0 auto 20px;padding:8px 28px;background:#1a6fa0;color:white;border:none;border-radius:4px;font-size:12px;font-weight:700;font-family:'Segoe UI',Arial,sans-serif;cursor:pointer;" onclick="kopijuoti()" data-i18n="copyAgainBtn">📋 &nbsp;Kopijuoti parašą dar kartą</button>
+    <div id="clipMsg" data-i18n="clipMsg">✓ Parašas nukopijuotas į iškarpinę!</div>
 
-    <div class="instr-title">Kaip aktyvuoti parašą Outlook:</div>
+    <div class="instr-title" data-i18n="instrTitle">Kaip aktyvuoti parašą Outlook:</div>
 
     <div class="step">
       <div class="step-num">1</div>
-      <div class="step-text">Outlook viršuje dešinėje spustelėkite <b>⚙ Nustatymai</b> (krumpliaračio piktogramą)</div>
+      <div class="step-text" data-i18n-html="step1"></div>
     </div>
     <div class="step">
       <div class="step-num">2</div>
-      <div class="step-text">Pasirinkite <b>„Parašas"</b> (angl. <b>„Signature"</b>)</div>
+      <div class="step-text" data-i18n-html="step2"></div>
     </div>
     <div class="step">
       <div class="step-num">3</div>
-      <div class="step-text">Paspauskite <b>„Įtraukti parašą"</b> (angl. <b>„Create signature"</b>)</div>
+      <div class="step-text" data-i18n-html="step3"></div>
     </div>
     <div class="step">
       <div class="step-num">4</div>
-      <div class="step-text">Atsidariusiame lange įveskite parašo pavadinimą ir įklijuokite Jūsų sugeneruotą parašą paspausdami <b>CTRL+V</b> arba paspausdami dešinį pelės klavišą ir pasirinkę <b>„Įklijuoti"</b> (angl. <b>„Paste"</b>). Įklijavus parašą, kiek žemiau pažymėkite varnelę ant <b>„Nustatyti numatytąją naujiems pranešimams"</b></div>
+      <div class="step-text" data-i18n-html="step4"></div>
     </div>
     <div class="step">
       <div class="step-num">5</div>
-      <div class="step-text">Atlikus visus numatytus veiksmus, žemiau spustelėkite <b>„Įrašyti"</b> (angl. <b>„Save"</b>)</div>
+      <div class="step-text" data-i18n-html="step5"></div>
     </div>
 
-    <button class="ok-btn" onclick="reset()">← Grįžti / naujas parašas</button>
+    <button class="ok-btn" onclick="reset()" data-i18n="backBtn">← Grįžti / naujas parašas</button>
   </div>
 </div>
 
@@ -287,26 +328,92 @@
 
 <script>
 let sigHtml = "";
+let currentLang = localStorage.getItem("mida-sig-lang") || (navigator.language.startsWith("lt") ? "lt" : "en");
 
-function kurti() {
-  const vardas   = document.getElementById("vardas").value.trim();
-  const pavarde  = document.getElementById("pavarde").value.trim();
-  const pareigos = document.getElementById("pareigos").value.trim();
-  const telefonas= document.getElementById("telefonas").value.trim();
-  const elpastas = document.getElementById("elpastas").value.trim();
+const i18n = {
+  lt: {
+    title: "MIDA – Parašo kūrimas",
+    header: "MIDA \u00a0•\u00a0 Elektroninio parašo kūrimas",
+    firstName: "Vardas",
+    lastName: "Pavardė",
+    jobTitle: "Pareigos",
+    phone: "Telefonas",
+    email: "El. paštas",
+    createBtn: "✓ \u00a0Sukurti parašą",
+    formNote: "Parašas bus sugeneruotas ir nukopijuotas į iškarpinę",
+    successBar: "✓ \u00a0Parašas sėkmingai sukurtas ir nukopijuotas į iškarpinę!",
+    previewLabel: "PARAŠO PERŽIŪRA",
+    copyAgainBtn: "📋 \u00a0Kopijuoti parašą dar kartą",
+    clipMsg: "✓ Parašas nukopijuotas į iškarpinę!",
+    instrTitle: "Kaip aktyvuoti parašą Outlook:",
+    backBtn: "← Grįžti / naujas parašas",
+    fillAllFields: "Prašome užpildyti visus laukus.",
+    copyFailed: "Nepavyko automatiškai nukopijuoti. Pasirinkite parašą peržiūros srityje ir nukopijuokite rankiniu būdu (CTRL+C).",
+    sigGreeting: "Pagarbiai,",
+    step1: 'Outlook viršuje dešinėje spustelėkite <b>⚙ Nustatymai</b> (krumpliaračio piktogramą)',
+    step2: 'Pasirinkite <b>„Parašas"</b> (angl. <b>„Signature"</b>)',
+    step3: 'Paspauskite <b>„Įtraukti parašą"</b> (angl. <b>„Create signature"</b>)',
+    step4: 'Atsidariusiame lange įveskite parašo pavadinimą ir įklijuokite Jūsų sugeneruotą parašą paspausdami <b>CTRL+V</b> arba paspausdami dešinį pelės klavišą ir pasirinkę <b>„Įklijuoti"</b> (angl. <b>„Paste"</b>). Įklijavus parašą, kiek žemiau pažymėkite varnelę ant <b>„Nustatyti numatytąją naujiems pranešimams"</b>',
+    step5: 'Atlikus visus numatytus veiksmus, žemiau spustelėkite <b>„Įrašyti"</b> (angl. <b>„Save"</b>)',
+  },
+  en: {
+    title: "MIDA – Signature builder",
+    header: "MIDA \u00a0•\u00a0 Email signature builder",
+    firstName: "First name",
+    lastName: "Last name",
+    jobTitle: "Job title",
+    phone: "Phone",
+    email: "Email",
+    createBtn: "✓ \u00a0Create signature",
+    formNote: "The signature will be generated and copied to your clipboard",
+    successBar: "✓ \u00a0Signature created and copied to clipboard!",
+    previewLabel: "SIGNATURE PREVIEW",
+    copyAgainBtn: "📋 \u00a0Copy signature again",
+    clipMsg: "✓ Signature copied to clipboard!",
+    instrTitle: "How to activate the signature in Outlook:",
+    backBtn: "← Back / new signature",
+    fillAllFields: "Please fill in all fields.",
+    copyFailed: "Could not copy automatically. Select the signature in the preview area and copy manually (CTRL+C).",
+    sigGreeting: "Best regards,",
+    step1: 'In Outlook, click <b>⚙ Settings</b> (gear icon) in the top right',
+    step2: 'Select <b>Signatures</b>',
+    step3: 'Click <b>New signature</b> or <b>Create signature</b>',
+    step4: 'Enter a name for the signature and paste your generated signature with <b>CTRL+V</b> or right-click and choose <b>Paste</b>. After pasting, check <b>Set as default for new messages</b>',
+    step5: 'When finished, click <b>Save</b>',
+  },
+};
 
-  if (!vardas || !pavarde || !pareigos || !telefonas || !elpastas) {
-    alert("Prašome užpildyti visus laukus.");
-    return;
-  }
+function t(key) {
+  return i18n[currentLang][key] ?? i18n.lt[key] ?? key;
+}
 
-  const vD = vardas.charAt(0).toUpperCase() + vardas.slice(1).toLowerCase();
-  const pD = pavarde.toUpperCase();
+function setLang(lang) {
+  if (!i18n[lang]) return;
+  currentLang = lang;
+  localStorage.setItem("mida-sig-lang", lang);
+  document.documentElement.lang = lang;
+  applyTranslations();
+  document.getElementById("langLt").classList.toggle("active", lang === "lt");
+  document.getElementById("langEn").classList.toggle("active", lang === "en");
+  if (sigHtml) regenerateSignature();
+}
 
-  const logoHtml = `<a href="https://www.mida.lt" target="_blank" style="display:block;"><img src="https://mida.lt/mida_logo.png" alt="MIDA" width="120" style="display:block;border:0;"></a>`;
+function applyTranslations() {
+  document.title = t("title");
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    el.textContent = t(key);
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-html");
+    el.innerHTML = t(key);
+  });
+}
 
-  sigHtml = `<p style="margin:0 0 4px 0;font-family:Arial,sans-serif;font-size:12px;color:#111;">--</p>
-<p style="margin:0 0 12px 0;font-family:Arial,sans-serif;font-size:12px;color:#111;">Best regards,</p>
+function buildSignatureHtml(vD, pD, pareigos, telefonas, elpastas) {
+  const logoHtml = '<a href="https://www.mida.lt" target="_blank" style="display:block;"><img src="https://mida.lt/mida_logo.png" alt="MIDA" width="120" style="display:block;border:0;"></a>';
+  return `<p style="margin:0 0 4px 0;font-family:Arial,sans-serif;font-size:12px;color:#111;">--</p>
+<p style="margin:0 0 12px 0;font-family:Arial,sans-serif;font-size:12px;color:#111;">${t("sigGreeting")}</p>
 <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;">
   <tr>
     <td style="vertical-align:middle;padding:16px 20px 16px 0;">${logoHtml}</td>
@@ -320,32 +427,55 @@ function kurti() {
     </td>
   </tr>
 </table>`;
+}
 
-  // Parašo peržiūra
+function regenerateSignature() {
+  const vardas = document.getElementById("vardas").value.trim();
+  const pavarde = document.getElementById("pavarde").value.trim();
+  const pareigos = document.getElementById("pareigos").value.trim();
+  const telefonas = document.getElementById("telefonas").value.trim();
+  const elpastas = document.getElementById("elpastas").value.trim();
+  if (!vardas || !pavarde || !pareigos || !telefonas || !elpastas) return;
+  const vD = vardas.charAt(0).toUpperCase() + vardas.slice(1).toLowerCase();
+  const pD = pavarde.toUpperCase();
+  sigHtml = buildSignatureHtml(vD, pD, pareigos, telefonas, elpastas);
   document.getElementById("previewBody").innerHTML = sigHtml;
+}
 
-  // Kopijuoti į iškarpinę
+function kurti() {
+  const vardas   = document.getElementById("vardas").value.trim();
+  const pavarde  = document.getElementById("pavarde").value.trim();
+  const pareigos = document.getElementById("pareigos").value.trim();
+  const telefonas= document.getElementById("telefonas").value.trim();
+  const elpastas = document.getElementById("elpastas").value.trim();
+
+  if (!vardas || !pavarde || !pareigos || !telefonas || !elpastas) {
+    alert(t("fillAllFields"));
+    return;
+  }
+
+  const vD = vardas.charAt(0).toUpperCase() + vardas.slice(1).toLowerCase();
+  const pD = pavarde.toUpperCase();
+  sigHtml = buildSignatureHtml(vD, pD, pareigos, telefonas, elpastas);
+
+  document.getElementById("previewBody").innerHTML = sigHtml;
   kopijuoti();
-
-  // Rodyti instrukcijų ekraną
   document.getElementById("formArea").style.display = "none";
   document.getElementById("instrArea").style.display = "block";
 }
 
 async function kopijuoti() {
-  // Metodas 1: modernus Clipboard API (veikia HTTPS arba localhost)
+  if (!sigHtml) return;
+
   if (navigator.clipboard && window.ClipboardItem) {
     try {
       const blob = new Blob([sigHtml], { type: "text/html" });
       await navigator.clipboard.write([new ClipboardItem({ "text/html": blob })]);
       rodytikMsg();
       return;
-    } catch (e) {
-      // Pereiti prie atsarginio metodo
-    }
+    } catch (e) {}
   }
 
-  // Metodas 2: execCommand (veikia HTTP intranete)
   try {
     const el = document.getElementById("_clipHelper");
     el.innerHTML = sigHtml;
@@ -366,7 +496,7 @@ async function kopijuoti() {
     el.style.left = "-9999px";
     rodytikMsg();
   } catch (e) {
-    alert("Nepavyko automatiškai nukopijuoti. Pasirinkite parašą peržiūros srityje ir nukopijuokite rankiniu būdu (CTRL+C).");
+    alert(t("copyFailed"));
   }
 }
 
@@ -386,6 +516,8 @@ function reset() {
   document.getElementById("elpastas").value = "";
   sigHtml = "";
 }
+
+setLang(currentLang);
 </script>
 
 </body>
