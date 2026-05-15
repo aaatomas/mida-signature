@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIDA – Parašo kūrimas</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 16px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+    width: 100%;
+    max-width: 480px;
+    overflow: hidden;
+  }
+
+  .header {
+    background: #1a3a5c;
+    color: white;
+    padding: 16px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+  }
+
+  .form-area {
+    padding: 28px 28px 20px;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  label {
+    width: 100px;
+    font-size: 13px;
+    color: #445;
+    flex-shrink: 0;
+  }
+
+  input[type=text] {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1px solid #c8cdd8;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #222;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type=text]:focus {
+    border-color: #1e82b4;
+    box-shadow: 0 0 0 2px rgba(30,130,180,0.12);
+  }
+
+  .btn-row {
+    text-align: center;
+    margin-top: 22px;
+  }
+
+  #btnOK {
+    padding: 10px 40px;
+    background: #1a6fa0;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: "Segoe UI", Arial, sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: background 0.15s;
+  }
+
+  #btnOK:hover { background: #1580b8; }
+
+  .note {
+    text-align: center;
+    font-size: 11px;
+    color: #888;
+    margin-top: 10px;
+  }
+
+  /* Instrukcijų ekranas */
+  .instr-area {
+    display: none;
+    padding: 24px 28px 28px;
+  }
+
+  .success-bar {
+    background: #e6f4ea;
+    border-left: 4px solid #34a853;
+    padding: 10px 14px;
+    margin-bottom: 22px;
+    font-size: 13px;
+    color: #1e6e3a;
+    font-weight: 600;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .instr-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a3a5c;
+    margin-bottom: 18px;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+
+  .step-num {
+    background: #1a6fa0;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .step-text {
+    font-size: 13px;
+    color: #222;
+    line-height: 1.55;
+  }
+
+  .step-text b {
+    color: #1a3a5c;
+  }
+
+  .ok-btn {
+    display: block;
+    margin: 26px auto 0;
+    padding: 9px 36px;
+    background: #1a6fa0;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: "Segoe UI", Arial, sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .ok-btn:hover { background: #1580b8; }
+
+  /* Parašo peržiūra */
+  .preview-wrap {
+    margin: 0 0 18px 0;
+    border: 1px solid #d0d8e4;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .preview-label {
+    background: #f0f4f8;
+    border-bottom: 1px solid #d0d8e4;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: #667;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .preview-body {
+    padding: 8px;
+    background: #fff;
+  }
+
+  /* Clipboard pranešimas */
+  #clipMsg {
+    display: none;
+    text-align: center;
+    font-size: 12px;
+    color: #1e6e3a;
+    background: #e6f4ea;
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">MIDA &nbsp;•&nbsp; Elektroninio parašo kūrimas</div>
+
+  <!-- Formos ekranas -->
+  <div class="form-area" id="formArea">
+    <div class="row">
+      <label>Vardas</label>
+      <input type="text" id="vardas" autocomplete="given-name" />
+    </div>
+    <div class="row">
+      <label>Pavardė</label>
+      <input type="text" id="pavarde" autocomplete="family-name" />
+    </div>
+    <div class="row">
+      <label>Pareigos</label>
+      <input type="text" id="pareigos" />
+    </div>
+    <div class="row">
+      <label>Telefonas</label>
+      <input type="text" id="telefonas" value="+370 " />
+    </div>
+    <div class="row">
+      <label>El. paštas</label>
+      <input type="text" id="elpastas" autocomplete="email" />
+    </div>
+
+    <div class="btn-row">
+      <button id="btnOK" onclick="kurti()">✓ &nbsp;Sukurti parašą</button>
+    </div>
+    <div class="note">Parašas bus sugeneruotas ir nukopijuotas į iškarpinę</div>
+  </div>
+
+  <!-- Instrukcijų ekranas -->
+  <div class="instr-area" id="instrArea">
+    <div class="success-bar">✓ &nbsp;Parašas sėkmingai sukurtas ir nukopijuotas į iškarpinę!</div>
+
+    <!-- Parašo peržiūra -->
+    <div class="preview-wrap">
+      <div class="preview-label">PARAŠO PERŽIŪRA</div>
+      <div class="preview-body" id="previewBody"></div>
+    </div>
+
+    <button style="display:block;margin:0 auto 20px;padding:8px 28px;background:#1a6fa0;color:white;border:none;border-radius:4px;font-size:12px;font-weight:700;font-family:'Segoe UI',Arial,sans-serif;cursor:pointer;" onclick="kopijuoti()">📋 &nbsp;Kopijuoti parašą dar kartą</button>
+    <div id="clipMsg">✓ Parašas nukopijuotas į iškarpinę!</div>
+
+    <div class="instr-title">Kaip aktyvuoti parašą Outlook:</div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">Outlook viršuje dešinėje spustelėkite <b>⚙ Nustatymai</b> (krumpliaračio piktogramą)</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">Pasirinkite <b>„Parašas"</b> (angl. <b>„Signature"</b>)</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">Paspauskite <b>„Įtraukti parašą"</b> (angl. <b>„Create signature"</b>)</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">Atsidariusiame lange įveskite parašo pavadinimą ir įklijuokite Jūsų sugeneruotą parašą paspausdami <b>CTRL+V</b> arba paspausdami dešinį pelės klavišą ir pasirinkę <b>„Įklijuoti"</b> (angl. <b>„Paste"</b>). Įklijavus parašą, kiek žemiau pažymėkite varnelę ant <b>„Nustatyti numatytąją naujiems pranešimams"</b></div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-text">Atlikus visus numatytus veiksmus, žemiau spustelėkite <b>„Įrašyti"</b> (angl. <b>„Save"</b>)</div>
+    </div>
+
+    <button class="ok-btn" onclick="reset()">← Grįžti / naujas parašas</button>
+  </div>
+</div>
+
+<!-- Paslėptas clipboard pagalbininkas -->
+<div id="_clipHelper" contenteditable="true" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;"></div>
+
+<script>
+const LOGO_URL = "https://www.mida.lt/wp-content/uploads/2023/06/logo-mida-1.svg";
+
+let sigHtml = "";
+
+function kurti() {
+  const vardas   = document.getElementById("vardas").value.trim();
+  const pavarde  = document.getElementById("pavarde").value.trim();
+  const pareigos = document.getElementById("pareigos").value.trim();
+  const telefonas= document.getElementById("telefonas").value.trim();
+  const elpastas = document.getElementById("elpastas").value.trim();
+
+  if (!vardas || !pavarde || !pareigos || !telefonas || !elpastas) {
+    alert("Prašome užpildyti visus laukus.");
+    return;
+  }
+
+  const vD = vardas.charAt(0).toUpperCase() + vardas.slice(1).toLowerCase();
+  const pD = pavarde.toUpperCase();
+
+  const logoHtml = `<img src="${LOGO_URL}" alt="MIDA" width="120" style="display:block;">`;
+
+  sigHtml = `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;">
+  <tr>
+    <td style="vertical-align:middle;padding:16px 20px 16px 0;">${logoHtml}</td>
+    <td style="width:2px;background:#1e82b4;padding:0;"></td>
+    <td style="vertical-align:top;padding:16px 0 16px 20px;">
+      <p style="margin:0 0 10px 0;font-size:13px;font-weight:700;color:#111;">${vD} ${pD}</p>
+      <p style="margin:0 0 4px 0;font-size:11px;color:#111;">${pareigos}</p>
+      <p style="margin:0 0 4px 0;font-size:11px;color:#111;">${telefonas}</p>
+      <p style="margin:0 0 14px 0;font-size:11px;"><a href="mailto:${elpastas}" style="color:#111;text-decoration:underline;">${elpastas}</a></p>
+      <p style="margin:0;font-size:11px;"><a href="https://www.mida.lt" style="color:#1e82b4;text-decoration:underline;">www.mida.lt</a></p>
+    </td>
+  </tr>
+</table>`;
+
+  // Parašo peržiūra
+  document.getElementById("previewBody").innerHTML = sigHtml;
+
+  // Kopijuoti į iškarpinę
+  kopijuoti();
+
+  // Rodyti instrukcijų ekraną
+  document.getElementById("formArea").style.display = "none";
+  document.getElementById("instrArea").style.display = "block";
+}
+
+async function kopijuoti() {
+  // Metodas 1: modernus Clipboard API (veikia HTTPS arba localhost)
+  if (navigator.clipboard && window.ClipboardItem) {
+    try {
+      const blob = new Blob([sigHtml], { type: "text/html" });
+      await navigator.clipboard.write([new ClipboardItem({ "text/html": blob })]);
+      rodytikMsg();
+      return;
+    } catch (e) {
+      // Pereiti prie atsarginio metodo
+    }
+  }
+
+  // Metodas 2: execCommand (veikia HTTP intranete)
+  try {
+    const el = document.getElementById("_clipHelper");
+    el.innerHTML = sigHtml;
+    el.style.position = "fixed";
+    el.style.left = "0";
+    el.style.top = "0";
+    el.style.opacity = "0";
+    el.style.pointerEvents = "none";
+
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand("copy");
+    sel.removeAllRanges();
+
+    el.style.left = "-9999px";
+    rodytikMsg();
+  } catch (e) {
+    alert("Nepavyko automatiškai nukopijuoti. Pasirinkite parašą peržiūros srityje ir nukopijuokite rankiniu būdu (CTRL+C).");
+  }
+}
+
+function rodytikMsg() {
+  const msg = document.getElementById("clipMsg");
+  msg.style.display = "block";
+  setTimeout(() => { msg.style.display = "none"; }, 3000);
+}
+
+function reset() {
+  document.getElementById("instrArea").style.display = "none";
+  document.getElementById("formArea").style.display = "block";
+  document.getElementById("vardas").value = "";
+  document.getElementById("pavarde").value = "";
+  document.getElementById("pareigos").value = "";
+  document.getElementById("telefonas").value = "+370 ";
+  document.getElementById("elpastas").value = "";
+  sigHtml = "";
+}
+</script>
+
+</body>
+</html>
