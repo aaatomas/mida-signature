@@ -286,8 +286,6 @@
 <div id="_clipHelper" contenteditable="true" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;"></div>
 
 <script>
-const LOGO_URL = "https://www.mida.lt/wp-content/uploads/2023/06/logo-mida-1.svg";
-
 let sigHtml = "";
 
 function kurti() {
@@ -305,18 +303,20 @@ function kurti() {
   const vD = vardas.charAt(0).toUpperCase() + vardas.slice(1).toLowerCase();
   const pD = pavarde.toUpperCase();
 
-  const logoHtml = `<img src="${LOGO_URL}" alt="MIDA" width="120" style="display:block;">`;
+  const logoHtml = `<a href="https://www.mida.lt" target="_blank" style="display:block;"><img src="https://mida.lt/mida_logo.png" alt="MIDA" width="120" style="display:block;border:0;"></a>`;
 
-  sigHtml = `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;">
+  sigHtml = `<p style="margin:0 0 4px 0;font-family:Arial,sans-serif;font-size:12px;color:#111;">--</p>
+<p style="margin:0 0 12px 0;font-family:Arial,sans-serif;font-size:12px;color:#111;">Best regards,</p>
+<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;">
   <tr>
     <td style="vertical-align:middle;padding:16px 20px 16px 0;">${logoHtml}</td>
-    <td style="width:2px;background:#1e82b4;padding:0;"></td>
+    <td style="width:2px;background:#215E99;padding:0;"></td>
     <td style="vertical-align:top;padding:16px 0 16px 20px;">
       <p style="margin:0 0 10px 0;font-size:13px;font-weight:700;color:#111;">${vD} ${pD}</p>
       <p style="margin:0 0 4px 0;font-size:11px;color:#111;">${pareigos}</p>
       <p style="margin:0 0 4px 0;font-size:11px;color:#111;">${telefonas}</p>
-      <p style="margin:0 0 14px 0;font-size:11px;"><a href="mailto:${elpastas}" style="color:#111;text-decoration:underline;">${elpastas}</a></p>
-      <p style="margin:0;font-size:11px;"><a href="https://www.mida.lt" style="color:#1e82b4;text-decoration:underline;">www.mida.lt</a></p>
+      <p style="margin:0 0 14px 0;font-size:11px;color:#111;"><a href="mailto:${elpastas}" style="color:#111;text-decoration:none;">${elpastas}</a></p>
+      <p style="margin:0;font-size:11px;"><a href="https://www.mida.lt" target="_blank" style="color:#111;text-decoration:none;">www.mida.lt</a></p>
     </td>
   </tr>
 </table>`;
