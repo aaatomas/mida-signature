@@ -23,7 +23,7 @@
     border-radius: 8px;
     box-shadow: 0 2px 16px rgba(0,0,0,0.10);
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
     overflow: hidden;
   }
 
@@ -81,8 +81,8 @@
     margin-bottom: 12px;
   }
 
-  label {
-    width: 100px;
+  .row > label {
+    width: 108px;
     font-size: 13px;
     color: #445;
     flex-shrink: 0;
@@ -104,6 +104,96 @@
   input[type=text]:focus {
     border-color: #1e82b4;
     box-shadow: 0 0 0 2px rgba(30,130,180,0.12);
+  }
+
+  .opt-section {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #e4e8f0;
+  }
+
+  .opt-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1a3a5c;
+    margin-bottom: 12px;
+    letter-spacing: 0.2px;
+  }
+
+  .row-top {
+    align-items: flex-start;
+  }
+
+  .row-top > label {
+    padding-top: 8px;
+  }
+
+  .banner-fields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .file-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .file-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    border: 1px solid #c8cdd8;
+    border-radius: 4px;
+    background: #f7f8fb;
+    font-size: 12px;
+    color: #334;
+    cursor: pointer;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .file-btn:hover { background: #eef1f6; }
+
+  .file-name {
+    font-size: 12px;
+    color: #556;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .clear-btn {
+    border: none;
+    background: none;
+    color: #889;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+
+  .clear-btn:hover { color: #c0392b; }
+
+  .banner-thumb {
+    display: none;
+    margin: 0 0 12px 108px;
+    max-width: calc(100% - 108px);
+  }
+
+  .banner-thumb img {
+    max-width: 100%;
+    max-height: 88px;
+    border: 1px solid #d0d8e4;
+    border-radius: 4px;
+    display: block;
   }
 
   .btn-row {
@@ -230,6 +320,11 @@
     background: #fff;
   }
 
+  .preview-body img {
+    max-width: 100%;
+    height: auto;
+  }
+
   /* Clipboard pranešimas */
   #clipMsg {
     display: none;
@@ -275,6 +370,29 @@
     <div class="row">
       <label data-i18n="email">El. paštas</label>
       <input type="text" id="elpastas" autocomplete="email" />
+    </div>
+
+    <div class="opt-section">
+      <div class="opt-title" data-i18n="bannerSection">Baneris (neprivaloma)</div>
+      <div class="row row-top">
+        <label data-i18n="banner">Paveikslėlis</label>
+        <div class="banner-fields">
+          <input type="text" id="banerisUrl" autocomplete="off" data-i18n-placeholder="bannerUrlPlaceholder" placeholder="https://" />
+          <div class="file-row">
+            <label class="file-btn">
+              <input type="file" id="banerisFile" accept="image/*" hidden />
+              <span data-i18n="bannerChooseFile">Įkelti failą</span>
+            </label>
+            <span class="file-name" id="bannerFileName"></span>
+            <button type="button" class="clear-btn" id="bannerClearBtn" onclick="clearBanner()" style="display:none" aria-label="Clear">&times;</button>
+          </div>
+        </div>
+      </div>
+      <div class="banner-thumb" id="bannerThumb"><img id="bannerThumbImg" alt=""></div>
+      <div class="row">
+        <label data-i18n="bannerLink">Nuoroda</label>
+        <input type="text" id="banerisLink" autocomplete="off" data-i18n-placeholder="bannerLinkPlaceholder" placeholder="https://" />
+      </div>
     </div>
 
     <div class="btn-row">
@@ -328,6 +446,8 @@
 
 <script>
 let sigHtml = "";
+let bannerSrc = "";
+let bannerWidth = 480;
 let currentLang = localStorage.getItem("mida-sig-lang") || (navigator.language.startsWith("lt") ? "lt" : "en");
 
 const i18n = {
@@ -339,6 +459,14 @@ const i18n = {
     jobTitle: "Pareigos",
     phone: "Telefonas",
     email: "El. paštas",
+    bannerSection: "Baneris (neprivaloma)",
+    banner: "Paveikslėlis",
+    bannerLink: "Nuoroda",
+    bannerUrlPlaceholder: "Paveikslėlio adresas (https://…)",
+    bannerLinkPlaceholder: "Adresas paspaudus (https://…)",
+    bannerChooseFile: "Įkelti failą",
+    bannerFileError: "Nepavyko nuskaityti paveikslėlio.",
+    bannerClear: "Pašalinti banerį",
     createBtn: "✓ \u00a0Sukurti parašą",
     formNote: "Parašas bus sugeneruotas ir nukopijuotas į iškarpinę",
     successBar: "✓ \u00a0Parašas sėkmingai sukurtas ir nukopijuotas į iškarpinę!",
@@ -364,6 +492,14 @@ const i18n = {
     jobTitle: "Job title",
     phone: "Phone",
     email: "Email",
+    bannerSection: "Banner (optional)",
+    banner: "Image",
+    bannerLink: "Link",
+    bannerUrlPlaceholder: "Image address (https://…)",
+    bannerLinkPlaceholder: "Destination URL (https://…)",
+    bannerChooseFile: "Upload file",
+    bannerFileError: "Could not read the image.",
+    bannerClear: "Remove banner",
     createBtn: "✓ \u00a0Create signature",
     formNote: "The signature will be generated and copied to your clipboard",
     successBar: "✓ \u00a0Signature created and copied to clipboard!",
@@ -408,6 +544,36 @@ function applyTranslations() {
     const key = el.getAttribute("data-i18n-html");
     el.innerHTML = t(key);
   });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    el.placeholder = t(key);
+  });
+  const clearBtn = document.getElementById("bannerClearBtn");
+  if (clearBtn) clearBtn.setAttribute("aria-label", t("bannerClear"));
+}
+
+function escapeAttr(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function buildBannerHtml() {
+  const src = getBannerSrc();
+  if (!src) return "";
+  const link = document.getElementById("banerisLink").value.trim();
+  const width = bannerSrc && !document.getElementById("banerisUrl").value.trim() ? bannerWidth : 480;
+  const img = `<img src="${escapeAttr(src)}" alt="" width="${width}" style="display:block;border:0;outline:none;text-decoration:none;max-width:${width}px;height:auto;">`;
+  const inner = /^https?:\/\//i.test(link)
+    ? `<a href="${escapeAttr(link)}" target="_blank" style="display:block;">${img}</a>`
+    : img;
+  return `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:12px;">
+  <tr>
+    <td>${inner}</td>
+  </tr>
+</table>`;
 }
 
 function buildSignatureHtml(vD, pD, pareigos, telefonas, elpastas) {
@@ -426,7 +592,109 @@ function buildSignatureHtml(vD, pD, pareigos, telefonas, elpastas) {
       <p style="margin:0;font-size:11px;"><a href="https://www.mida.lt" target="_blank" style="color:#111;text-decoration:none;">www.mida.lt</a></p>
     </td>
   </tr>
-</table>`;
+</table>${buildBannerHtml()}`;
+}
+
+function getBannerSrc() {
+  const url = document.getElementById("banerisUrl").value.trim();
+  return url || bannerSrc;
+}
+
+function showBannerThumb(src) {
+  const wrap = document.getElementById("bannerThumb");
+  const img = document.getElementById("bannerThumbImg");
+  img.src = src;
+  wrap.style.display = "block";
+  document.getElementById("bannerClearBtn").style.display = "inline";
+}
+
+function hideBannerThumb() {
+  const wrap = document.getElementById("bannerThumb");
+  const img = document.getElementById("bannerThumbImg");
+  img.removeAttribute("src");
+  wrap.style.display = "none";
+}
+
+function clearBanner() {
+  bannerSrc = "";
+  bannerWidth = 480;
+  document.getElementById("banerisUrl").value = "";
+  document.getElementById("banerisFile").value = "";
+  document.getElementById("bannerFileName").textContent = "";
+  document.getElementById("bannerClearBtn").style.display = "none";
+  hideBannerThumb();
+}
+
+function fileToBannerDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (file.type === "image/gif") {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ dataUrl: reader.result, width: 480 });
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+    const objUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 600;
+      let w = img.naturalWidth;
+      let h = img.naturalHeight;
+      if (w > maxW) {
+        h = Math.round((h * maxW) / w);
+        w = maxW;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      const isPng = file.type === "image/png";
+      const dataUrl = isPng ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", 0.88);
+      URL.revokeObjectURL(objUrl);
+      resolve({ dataUrl, width: w });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objUrl);
+      reject(new Error("image"));
+    };
+    img.src = objUrl;
+  });
+}
+
+function initBannerInputs() {
+  const fileInput = document.getElementById("banerisFile");
+  const urlInput = document.getElementById("banerisUrl");
+
+  fileInput.addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      const { dataUrl, width } = await fileToBannerDataUrl(file);
+      bannerSrc = dataUrl;
+      bannerWidth = width;
+      urlInput.value = "";
+      document.getElementById("bannerFileName").textContent = file.name;
+      showBannerThumb(dataUrl);
+    } catch (err) {
+      clearBanner();
+      alert(t("bannerFileError"));
+    }
+  });
+
+  urlInput.addEventListener("input", () => {
+    const url = urlInput.value.trim();
+    if (url) {
+      bannerSrc = "";
+      bannerWidth = 480;
+      fileInput.value = "";
+      document.getElementById("bannerFileName").textContent = "";
+      showBannerThumb(url);
+    } else {
+      bannerSrc = "";
+      hideBannerThumb();
+      document.getElementById("bannerClearBtn").style.display = "none";
+    }
+  });
 }
 
 function regenerateSignature() {
@@ -514,9 +782,12 @@ function reset() {
   document.getElementById("pareigos").value = "";
   document.getElementById("telefonas").value = "+370 ";
   document.getElementById("elpastas").value = "";
+  document.getElementById("banerisLink").value = "";
+  clearBanner();
   sigHtml = "";
 }
 
+initBannerInputs();
 setLang(currentLang);
 </script>
 
