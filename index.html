@@ -112,12 +112,50 @@
     border-top: 1px solid #e4e8f0;
   }
 
+  .opt-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+
+  .opt-toggle:hover .opt-title { color: #1e82b4; }
+  .opt-toggle:focus-visible { outline: 2px solid #1e82b4; outline-offset: 3px; border-radius: 3px; }
+
+  .opt-chevron {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 6px solid #1a3a5c;
+    transition: transform 0.15s;
+    flex-shrink: 0;
+  }
+
+  .opt-toggle[aria-expanded="true"] .opt-chevron {
+    transform: rotate(90deg);
+  }
+
   .opt-title {
     font-size: 12px;
     font-weight: 700;
     color: #1a3a5c;
-    margin-bottom: 12px;
     letter-spacing: 0.2px;
+  }
+
+  .banner-panel {
+    margin-top: 12px;
+  }
+
+  .banner-panel[hidden] {
+    display: none;
   }
 
   .row-top {
@@ -373,25 +411,30 @@
     </div>
 
     <div class="opt-section">
-      <div class="opt-title" data-i18n="bannerSection">Baneris (neprivaloma)</div>
-      <div class="row row-top">
-        <label data-i18n="banner">Paveikslėlis</label>
-        <div class="banner-fields">
-          <input type="text" id="banerisUrl" autocomplete="off" data-i18n-placeholder="bannerUrlPlaceholder" placeholder="https://" />
-          <div class="file-row">
-            <label class="file-btn">
-              <input type="file" id="banerisFile" accept="image/*" hidden />
-              <span data-i18n="bannerChooseFile">Įkelti failą</span>
-            </label>
-            <span class="file-name" id="bannerFileName"></span>
-            <button type="button" class="clear-btn" id="bannerClearBtn" onclick="clearBanner()" style="display:none" aria-label="Clear">&times;</button>
+      <button type="button" class="opt-toggle" id="bannerToggle" onclick="toggleBannerFields()" aria-expanded="false" aria-controls="bannerPanel">
+        <span class="opt-chevron" aria-hidden="true"></span>
+        <span class="opt-title" data-i18n="bannerSection">Baneris (neprivaloma)</span>
+      </button>
+      <div class="banner-panel" id="bannerPanel" hidden>
+        <div class="row row-top">
+          <label data-i18n="banner">Paveikslėlis</label>
+          <div class="banner-fields">
+            <input type="text" id="banerisUrl" autocomplete="off" data-i18n-placeholder="bannerUrlPlaceholder" placeholder="https://" />
+            <div class="file-row">
+              <label class="file-btn">
+                <input type="file" id="banerisFile" accept="image/*" hidden />
+                <span data-i18n="bannerChooseFile">Įkelti failą</span>
+              </label>
+              <span class="file-name" id="bannerFileName"></span>
+              <button type="button" class="clear-btn" id="bannerClearBtn" onclick="clearBanner()" style="display:none" aria-label="Clear">&times;</button>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="banner-thumb" id="bannerThumb"><img id="bannerThumbImg" alt=""></div>
-      <div class="row">
-        <label data-i18n="bannerLink">Nuoroda</label>
-        <input type="text" id="banerisLink" autocomplete="off" data-i18n-placeholder="bannerLinkPlaceholder" placeholder="https://" />
+        <div class="banner-thumb" id="bannerThumb"><img id="bannerThumbImg" alt=""></div>
+        <div class="row">
+          <label data-i18n="bannerLink">Nuoroda</label>
+          <input type="text" id="banerisLink" autocomplete="off" data-i18n-placeholder="bannerLinkPlaceholder" placeholder="https://" />
+        </div>
       </div>
     </div>
 
@@ -615,6 +658,18 @@ function hideBannerThumb() {
   wrap.style.display = "none";
 }
 
+function setBannerFieldsOpen(open) {
+  const toggle = document.getElementById("bannerToggle");
+  const panel = document.getElementById("bannerPanel");
+  toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  panel.hidden = !open;
+}
+
+function toggleBannerFields() {
+  const open = document.getElementById("bannerToggle").getAttribute("aria-expanded") !== "true";
+  setBannerFieldsOpen(open);
+}
+
 function clearBanner() {
   bannerSrc = "";
   bannerWidth = 480;
@@ -784,6 +839,7 @@ function reset() {
   document.getElementById("elpastas").value = "";
   document.getElementById("banerisLink").value = "";
   clearBanner();
+  setBannerFieldsOpen(false);
   sigHtml = "";
 }
 
