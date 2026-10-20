@@ -10,7 +10,10 @@ import {
 } from 'react'
 import {
   isLocalOauthBypass,
+  keycloakUserinfoUrl,
+  oauth2AuthUrl,
   oauth2UserinfoUrl,
+  profileWhoamiUrl,
   redirectToOAuth2Logout,
 } from '../api/config'
 
@@ -143,6 +146,92 @@ function mapUserinfo(raw: Oauth2Userinfo): SessionUser {
   }
 }
 
+function mergeProfile(base: SessionUser, extra: SessionUser): SessionUser {
+  const firstName = extra.firstName || base.firstName
+  const lastName = extra.lastName || base.lastName
+  const name =
+    [firstName, lastName].filter(Boolean).join(' ') ||
+    extra.name ||
+    base.name
+  return {
+    ...base,
+    name,
+    firstName,
+    lastName,
+    email: base.email || extra.email,
+    phone: extra.phone || base.phone,
+    jobTitle: extra.jobTitle || base.jobTitle,
+    image: base.image || extra.image,
+    authenticated: Boolean(name || base.email || extra.email || base.authenticated),
+  }
+}
+
+async function readAccessTokenFromOauth2Auth(): Promise<string> {
+  try {
+    const response = await fetch(oauth2AuthUrl(), {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+      redirect: 'manual',
+    })
+    if (!(response.status === 202 || response.ok)) return ''
+    return (
+      response.headers.get('X-Auth-Request-Access-Token') ||
+      response.headers.get('x-auth-request-access-token') ||
+      ''
+    ).trim()
+  } catch {
+    return ''
+  }
+}
+
+async function fetchJsonProfile(url: string, headers?: HeadersInit): Promise<Oauth2Userinfo | null> {
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+      headers,
+    })
+    if (!response.ok) return null
+    const contentType = response.headers.get('content-type') ?? ''
+    if (!contentType.includes('json')) return null
+    return (await response.json()) as Oauth2Userinfo
+  } catch {
+    return null
+  }
+}
+
+/**
+ * /oauth2/userinfo lacks given_name / family_name / phone.
+ * Prefer Keycloak userinfo via access token (from /oauth2/auth or upstream /api/whoami).
+ */
+async function enrichFromKeycloakProfile(user: SessionUser): Promise<SessionUser> {
+  const token = await readAccessTokenFromOauth2Auth()
+
+  let data: Oauth2Userinfo | null = null
+  if (token) {
+    data =
+      (await fetchJsonProfile(profileWhoamiUrl(), { Authorization: `Bearer ${token}` })) ||
+      (await fetchJsonProfile(keycloakUserinfoUrl(), { Authorization: `Bearer ${token}` }))
+  }
+  if (!data) {
+    // Fallback: nginx maps X-Forwarded-Access-Token from oauth2-proxy → Keycloak.
+    data = await fetchJsonProfile(profileWhoamiUrl())
+  }
+  if (!data) return user
+  if (import.meta.env.DEV || new URLSearchParams(window.location.search).has('debug')) {
+    console.info('[signature] keycloak userinfo keys', Object.keys(data), {
+      given_name: data.given_name,
+      family_name: data.family_name,
+      phone_number: data.phone_number,
+      name: data.name,
+      email: data.email,
+    })
+  }
+  return mergeProfile(user, mapUserinfo(data))
+}
+
 type SessionContextValue = {
   session: Session | null
   logout: () => Promise<void>
@@ -179,7 +268,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const contentType = response.headers.get('content-type') ?? ''
       if (!contentType.includes('json')) return false
       const data = (await response.json()) as Oauth2Userinfo
-      const user = mapUserinfo(data)
+      const user = await enrichFromKeycloakProfile(mapUserinfo(data))
       if (user.authenticated) {
         setSession({ user })
         return true

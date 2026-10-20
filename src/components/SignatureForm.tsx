@@ -47,13 +47,33 @@ export default function SignatureForm({ user }: Props) {
   const [sigHtml, setSigHtml] = useState('')
   const [clipFlash, setClipFlash] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const prefilledUserId = useRef<string | null>(null)
 
+  // Fill empty fields as profile claims arrive (oauth2 userinfo first, then Keycloak whoami).
+  // Do not overwrite values the user already typed.
   useEffect(() => {
-    const id = user.email || user.name
-    if (!id || prefilledUserId.current === id) return
-    prefilledUserId.current = id
-    setFields(fieldsFromUser(user))
+    setFields((prev) => {
+      const phoneFromUser = user.phone?.trim() || ''
+      const next: SignatureFields = {
+        firstName: prev.firstName.trim() ? prev.firstName : user.firstName || '',
+        lastName: prev.lastName.trim() ? prev.lastName : user.lastName || '',
+        jobTitle: prev.jobTitle.trim() ? prev.jobTitle : user.jobTitle || '',
+        phone:
+          prev.phone.trim() && prev.phone.trim() !== '+370'
+            ? prev.phone
+            : phoneFromUser || '+370 ',
+        email: prev.email.trim() ? prev.email : user.email || '',
+      }
+      if (
+        next.firstName === prev.firstName &&
+        next.lastName === prev.lastName &&
+        next.jobTitle === prev.jobTitle &&
+        next.phone === prev.phone &&
+        next.email === prev.email
+      ) {
+        return prev
+      }
+      return next
+    })
   }, [user])
 
   useEffect(() => {

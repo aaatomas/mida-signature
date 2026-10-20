@@ -96,3 +96,22 @@ export function oauth2UserinfoUrl(): string {
   const o = oauth2ProxyOrigin().replace(/\/$/, '')
   return `${o}/oauth2/userinfo`
 }
+
+/** oauth2-proxy auth-only endpoint; response may include X-Auth-Request-Access-Token. */
+export function oauth2AuthUrl(): string {
+  const o = oauth2ProxyOrigin().replace(/\/$/, '')
+  return `${o}/oauth2/auth`
+}
+
+/**
+ * Same-origin whoami: nginx proxies the Bearer token to Keycloak userinfo.
+ * That response includes given_name / family_name / phone_number (unlike /oauth2/userinfo).
+ */
+export function profileWhoamiUrl(): string {
+  return '/api/whoami'
+}
+
+/** Public Keycloak userinfo (used when we already have an access token in the browser). */
+export function keycloakUserinfoUrl(): string {
+  return `${oidcIssuerUrl()}/protocol/openid-connect/userinfo`
+}
