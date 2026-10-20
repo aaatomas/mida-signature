@@ -1,0 +1,21 @@
+{{- $gateway := .Values.gateway | default dict }}
+{{- $armor := $gateway.cloudArmor | default dict }}
+{{- $policy := $armor.securityPolicy | default "" }}
+{{- $armorOn := and ($armor.enabled | default false) (gt (len $policy) 0) }}
+{{- $oauth := .Values.oauth2Proxy | default dict }}
+{{- if and $gateway.enabled $armorOn }}
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: {{ include "signature.fullname" . }}-armor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "signature.labels" . | nindent 4 }}
+spec:
+  default:
+    securityPolicy: {{ $policy | quote }}
+  targetRef:
+    group: ""
+    kind: Service
+    name: {{ if $oauth.enabled }}{{ printf "%s-oauth2-proxy" (include "signature.fullname" .) }}{{ else }}{{ include "signature.fullname" . }}{{ end }}
+{{- end }}

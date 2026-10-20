@@ -1,0 +1,45 @@
+# Local Kubernetes (Traefik). Host signature.onmida.lt must resolve to this
+# cluster (split DNS or /etc/hosts → node/LB IP).
+#
+# kubectl create secret generic signature-oauth2 -n <namespace> \
+#   --from-literal=client-secret='<keycloak-client-secret>' \
+#   --from-literal=cookie-secret="$(openssl rand -hex 16)"
+#
+# helm upgrade --install signature . -f values-local.yaml -n <namespace>
+
+ingress:
+  enabled: true
+  hosts:
+    - host: signature.onmida.lt
+  traefik:
+    enabled: true
+    entryPoints:
+      - web
+      - websecure
+    tls:
+      enabled: true
+      secretName: ""
+    oauth2:
+      enabled: true
+
+gateway:
+  enabled: false
+  hostnames:
+    - signature.onmida.lt
+
+oauth2Proxy:
+  enabled: true
+  clientId: oauth2-proxy
+  oidcIssuerURL: https://auth.onmida.lt/realms/mida
+  existingSecret: signature-oauth2
+  redirectURL: https://signature.onmida.lt/oauth2/callback
+  cookieName: _oauth2_proxy_signature_local
+  oidcGroupsClaim: groups
+  whitelistDomains:
+    - .onmida.lt
+  hostAliases:
+    - ip: "34.110.186.128"
+      hostnames:
+        - auth.onmida.lt
+        - id.onmida.lt
+        - keycloak.onmida.lt

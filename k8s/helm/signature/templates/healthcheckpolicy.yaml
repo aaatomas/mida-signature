@@ -1,0 +1,32 @@
+{{- $gateway := .Values.gateway | default dict }}
+{{- if $gateway.enabled }}
+{{- $oauth := .Values.oauth2Proxy | default dict }}
+{{- $oauthOn := $oauth.enabled | default false }}
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: {{ include "signature.fullname" . }}-healthcheck
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "signature.labels" . | nindent 4 }}
+spec:
+  default:
+    checkIntervalSec: 15
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    config:
+      type: HTTP
+      httpHealthCheck:
+        {{- if $oauthOn }}
+        port: 4180
+        requestPath: /ping
+        {{- else }}
+        port: {{ .Values.service.targetPort }}
+        requestPath: /health
+        {{- end }}
+  targetRef:
+    group: ""
+    kind: Service
+    name: {{ if $oauthOn }}{{ printf "%s-oauth2-proxy" (include "signature.fullname" .) }}{{ else }}{{ include "signature.fullname" . }}{{ end }}
+{{- end }}

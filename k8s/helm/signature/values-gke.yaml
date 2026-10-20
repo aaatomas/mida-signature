@@ -1,0 +1,59 @@
+# Standalone oauth2-proxy on the shared GKE Gateway.
+#
+#   ./scripts/build-publish.sh --gke
+#   kubectl create namespace signature
+#   kubectl label namespace signature shared-gateway-access=true --overwrite
+#   kubectl -n signature create secret generic signature-oauth2 \
+#     --from-literal=client-secret='...' \
+#     --from-literal=cookie-secret="$(openssl rand -hex 16)"
+#   helm upgrade --install signature . -n signature -f values-gke.yaml
+
+image:
+  repository: europe-north2-docker.pkg.dev/project-bcfa376f-0637-457a-ae0/k8s-registry/signature
+  pullPolicy: Always
+  tag: latest
+
+service:
+  type: NodePort
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+ingress:
+  enabled: false
+  traefik:
+    enabled: false
+    oauth2:
+      enabled: false
+
+gateway:
+  enabled: true
+  hostnames:
+    - signature.onmida.lt
+  parentRefs:
+    - name: shared-external-gateway
+      namespace: gateway-system
+      sectionName: https
+  cloudArmor:
+    enabled: true
+    securityPolicy: gateway-ip-whitelist
+
+oidc:
+  issuerURL: https://auth.onmida.lt/realms/mida
+  clientId: oauth2-proxy
+
+oauth2Proxy:
+  enabled: true
+  clientId: oauth2-proxy
+  oidcIssuerURL: https://auth.onmida.lt/realms/mida
+  existingSecret: signature-oauth2
+  cookieName: _oauth2_proxy_signature
+  whitelistDomains:
+    - .onmida.lt
+  redirectURL: https://signature.onmida.lt/oauth2/callback
+  oidcGroupsClaim: groups

@@ -1,0 +1,5 @@
+image:
+  pullPolicy: Always
+  tag: latest
+
+replicaCount: 2

@@ -1,0 +1,64 @@
+{{- if and .Values.ingress.enabled .Values.ingress.traefik.enabled }}
+{{- $host := (index .Values.ingress.hosts 0).host }}
+{{- $oauth := .Values.ingress.traefik.oauth2 }}
+{{- $proxy := .Values.oauth2Proxy | default dict }}
+{{- $inChart := and $oauth.enabled $proxy.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "signature.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "signature.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    {{- range .Values.ingress.traefik.entryPoints }}
+    - {{ . | quote }}
+    {{- end }}
+  routes:
+    {{- if $inChart }}
+    - match: Host(`{{ $host }}`) && PathPrefix(`/oauth2`)
+      kind: Rule
+      services:
+        - name: {{ printf "%s-oauth2-proxy" (include "signature.fullname" .) | quote }}
+          port: 4180
+          namespace: {{ .Release.Namespace | quote }}
+    {{- else if $oauth.enabled }}
+    - match: Host(`{{ $host }}`) && PathPrefix(`/oauth2`)
+      kind: Rule
+      services:
+        - name: {{ $oauth.proxyServiceName | quote }}
+          port: {{ $oauth.proxyServicePort }}
+          namespace: {{ $oauth.proxyServiceNamespace | quote }}
+    {{- end }}
+    - match: Host(`{{ $host }}`) && PathPrefix(`/health`)
+      kind: Rule
+      services:
+        - name: {{ include "signature.fullname" . }}
+          port: {{ .Values.service.port }}
+    {{- if $inChart }}
+    - match: Host(`{{ $host }}`)
+      kind: Rule
+      services:
+        - name: {{ printf "%s-oauth2-proxy" (include "signature.fullname" .) | quote }}
+          port: 4180
+          namespace: {{ .Release.Namespace | quote }}
+    {{- else }}
+    - match: Host(`{{ $host }}`)
+      kind: Rule
+      {{- if $oauth.enabled }}
+      middlewares:
+        - name: {{ $oauth.middlewareName | quote }}
+          namespace: {{ .Release.Namespace | quote }}
+      {{- end }}
+      services:
+        - name: {{ include "signature.fullname" . }}
+          port: {{ .Values.service.port }}
+    {{- end }}
+  {{- if .Values.ingress.traefik.tls.enabled }}
+  tls:
+    {{- if .Values.ingress.traefik.tls.secretName }}
+    secretName: {{ .Values.ingress.traefik.tls.secretName | quote }}
+    {{- end }}
+  {{- end }}
+{{- end }}

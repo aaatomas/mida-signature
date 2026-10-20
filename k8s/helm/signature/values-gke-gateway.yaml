@@ -1,0 +1,51 @@
+# GKE Gateway: authorizer’s oauth2-proxy terminates login for signature.onmida.lt.
+#
+#   ./scripts/build-publish.sh --gke
+#   helm upgrade --install signature . -f values-gke-gateway.yaml -n signature
+#
+# Then in the authorizer chart, set:
+#   oauth2:
+#     appUpstreams:
+#       - hostname: signature.onmida.lt
+#         locations:
+#           - backendURL: http://signature.signature.svc.cluster.local:80
+#             path: /
+# In Keycloak, client `oauth2-proxy` must allow
+#   https://signature.onmida.lt/oauth2/callback
+
+image:
+  repository: europe-north2-docker.pkg.dev/project-bcfa376f-0637-457a-ae0/k8s-registry/signature
+  pullPolicy: Always
+
+service:
+  type: NodePort
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+ingress:
+  enabled: false
+  traefik:
+    enabled: false
+    oauth2:
+      enabled: false
+
+gateway:
+  enabled: false
+  hostnames:
+    - signature.onmida.lt
+  parentRefs:
+    - name: shared-external-gateway
+      namespace: gateway-system
+      sectionName: https
+  cloudArmor:
+    enabled: false
+    securityPolicy: gateway-ip-whitelist
+
+oauth2Proxy:
+  enabled: false

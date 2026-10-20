@@ -1,0 +1,185 @@
+{{- $oauth := .Values.oauth2Proxy | default dict }}
+{{- if $oauth.enabled }}
+{{- $name := printf "%s-oauth2-proxy" (include "signature.fullname" .) }}
+{{- $uiSvc := include "signature.fullname" . }}
+{{- $ns := .Release.Namespace }}
+{{- $host0 := index (.Values.gateway.hostnames | default (list "signature.onmida.lt")) 0 }}
+{{- $redirect := $oauth.redirectURL | default (printf "https://%s/oauth2/callback" $host0) }}
+{{- $upstream := $oauth.upstream | default (printf "http://%s.%s.svc.cluster.local:%d" $uiSvc $ns (int .Values.service.port)) }}
+{{- $issuer := $oauth.oidcIssuerURL | default .Values.oidc.issuerURL }}
+{{- $clientId := $oauth.clientId | default .Values.oidc.clientId }}
+{{- $cookieName := $oauth.cookieName | default "_oauth2_proxy_signature" }}
+{{- $secretName := $oauth.existingSecret | default (printf "%s-oauth2" (include "signature.fullname" .)) }}
+{{- $issuerHost := (urlParse $issuer).host }}
+{{- $whitelist := list }}
+{{- if $oauth.whitelistDomains }}
+{{- $whitelist = $oauth.whitelistDomains }}
+{{- else if $oauth.whitelistDomain }}
+{{- $whitelist = list $oauth.whitelistDomain }}
+{{- else }}
+{{- $whitelist = list $host0 }}
+{{- end }}
+{{- if and $issuerHost (not (has $issuerHost $whitelist)) }}
+{{- $whitelist = append $whitelist $issuerHost }}
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "signature.labels" . | nindent 4 }}
+    app.kubernetes.io/component: oauth2-proxy
+data:
+  OAUTH2_PROXY_PROVIDER: "oidc"
+  OAUTH2_PROXY_OIDC_ISSUER_URL: {{ $issuer | quote }}
+  OAUTH2_PROXY_CLIENT_ID: {{ $clientId | quote }}
+  OAUTH2_PROXY_COOKIE_NAME: {{ $cookieName | quote }}
+  OAUTH2_PROXY_COOKIE_REFRESH: {{ ($oauth.cookieRefresh | default "1h") | quote }}
+  OAUTH2_PROXY_COOKIE_EXPIRE: {{ ($oauth.cookieExpire | default "4h") | quote }}
+  OAUTH2_PROXY_COOKIE_CSRF_PER_REQUEST: "true"
+  OAUTH2_PROXY_COOKIE_CSRF_EXPIRE: "10m"
+  OAUTH2_PROXY_COOKIE_CSRF_PER_REQUEST_LIMIT: "5"
+  OAUTH2_PROXY_COOKIE_SAMESITE: {{ ($oauth.cookieSameSite | default "lax") | quote }}
+  OAUTH2_PROXY_HTTP_ADDRESS: ":4180"
+  OAUTH2_PROXY_UPSTREAM: {{ $upstream | quote }}
+  OAUTH2_PROXY_REDIRECT_URL: {{ $redirect | quote }}
+  OAUTH2_PROXY_EMAIL_DOMAIN: "*"
+  OAUTH2_PROXY_WHITELIST_DOMAINS: {{ join "," $whitelist | quote }}
+  OAUTH2_PROXY_BACKEND_LOGOUT_URL: {{ printf "%s/protocol/openid-connect/logout?id_token_hint={id_token}" ($issuer | trimSuffix "/") | quote }}
+  OAUTH2_PROXY_SKIP_AUTH_REGEX: {{ ($oauth.skipAuthRegex | default "^/health$") | quote }}
+  OAUTH2_PROXY_OIDC_GROUPS_CLAIM: {{ ($oauth.oidcGroupsClaim | default "groups") | quote }}
+{{- if not $oauth.existingSecret }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $secretName }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "signature.labels" . | nindent 4 }}
+    app.kubernetes.io/component: oauth2-proxy
+type: Opaque
+stringData:
+  client-secret: {{ required "oauth2Proxy.clientSecret is required (or set oauth2Proxy.existingSecret)" $oauth.clientSecret | quote }}
+  cookie-secret: {{ required "oauth2Proxy.cookieSecret is required (openssl rand -base64 32 | head -c 32)" $oauth.cookieSecret | quote }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "signature.labels" . | nindent 4 }}
+    app.kubernetes.io/component: oauth2-proxy
+spec:
+  replicas: {{ $oauth.replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "signature.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        {{- include "signature.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: oauth2-proxy
+      annotations:
+        signature.onmida.lt/oauth-rollout: {{ .Values.uiRollout | default .Release.Revision | quote }}
+    spec:
+      {{- with $oauth.hostAliases }}
+      hostAliases:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: oauth2-proxy
+          image: "{{ ($oauth.image).repository | default "quay.io/oauth2-proxy/oauth2-proxy" }}:{{ ($oauth.image).tag | default "v7.15.4" }}"
+          imagePullPolicy: {{ ($oauth.image).pullPolicy | default "Always" }}
+          ports:
+            - containerPort: 4180
+              name: http
+          args:
+            - --provider=$(OAUTH2_PROXY_PROVIDER)
+            - --oidc-issuer-url=$(OAUTH2_PROXY_OIDC_ISSUER_URL)
+            - --client-id=$(OAUTH2_PROXY_CLIENT_ID)
+            - --client-secret=$(OAUTH2_PROXY_CLIENT_SECRET)
+            - --cookie-secret=$(OAUTH2_PROXY_COOKIE_SECRET)
+            - --cookie-name=$(OAUTH2_PROXY_COOKIE_NAME)
+            - --cookie-secure
+            - --cookie-httponly
+            - --cookie-refresh=$(OAUTH2_PROXY_COOKIE_REFRESH)
+            - --cookie-expire=$(OAUTH2_PROXY_COOKIE_EXPIRE)
+            - --cookie-csrf-per-request=$(OAUTH2_PROXY_COOKIE_CSRF_PER_REQUEST)
+            - --cookie-csrf-expire=$(OAUTH2_PROXY_COOKIE_CSRF_EXPIRE)
+            - --cookie-csrf-per-request-limit=$(OAUTH2_PROXY_COOKIE_CSRF_PER_REQUEST_LIMIT)
+            - --cookie-samesite=$(OAUTH2_PROXY_COOKIE_SAMESITE)
+            - --redirect-url=$(OAUTH2_PROXY_REDIRECT_URL)
+            - --upstream=$(OAUTH2_PROXY_UPSTREAM)
+            - --http-address=$(OAUTH2_PROXY_HTTP_ADDRESS)
+            - --email-domain=$(OAUTH2_PROXY_EMAIL_DOMAIN)
+            {{- range $whitelist }}
+            - --whitelist-domain={{ . }}
+            {{- end }}
+            - --backend-logout-url=$(OAUTH2_PROXY_BACKEND_LOGOUT_URL)
+            - --skip-auth-regex=$(OAUTH2_PROXY_SKIP_AUTH_REGEX)
+            - --oidc-groups-claim=$(OAUTH2_PROXY_OIDC_GROUPS_CLAIM)
+            - --reverse-proxy
+            - --set-xauthrequest
+            - --pass-access-token
+            - --pass-authorization-header
+            - --pass-user-headers
+            - --insecure-oidc-allow-unverified-email
+            - --skip-provider-button
+            - --prompt=login
+            - --request-logging
+            - --auth-logging
+            - --standard-logging
+          envFrom:
+            - configMapRef:
+                name: {{ $name }}
+          env:
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: client-secret
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: cookie-secret
+          resources:
+            {{- toYaml ($oauth.resources | default (dict "requests" (dict "cpu" "50m" "memory" "64Mi") "limits" (dict "cpu" "200m" "memory" "128Mi"))) | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "signature.labels" . | nindent 4 }}
+    app.kubernetes.io/component: oauth2-proxy
+spec:
+  type: {{ if .Values.gateway.enabled }}NodePort{{ else }}ClusterIP{{ end }}
+  ports:
+    - port: 4180
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "signature.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: oauth2-proxy
+{{- end }}
